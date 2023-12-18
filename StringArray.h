@@ -6,22 +6,22 @@ private:
 	static const int CAPACITY = 10;
 	int _size;
 public:
-	String data[CAPACITY];
+	float data[CAPACITY]{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 	
-	DataArray():_size(0){}
+	DataArray():_size(0){ }
 	
 	void _clearData()
 	{
-		for(int i = 0; i < _size ; i++) {data[i] = "";}
+		for(int i = 0; i < _size ; i++) {data[i] = -1;}
 		_size = 0;
 	}
 	
-	String& operator[](int index) 
+	float& operator[](int index) 
 	{
 		return data[index];
 	}
 	
-	void push_back(String &value)
+	void push_back(float value)
 	{
 		data[_size] = value;
 		_size++;
