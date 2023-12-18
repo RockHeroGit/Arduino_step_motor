@@ -21,7 +21,8 @@ enum Commands
   ACCELERATION,
   STATUS,
   TOZEROPOINT,
-  RESTART
+  RESTART,
+  SET_STEP_PER_ROUND
 };
 
 enum Control
@@ -44,7 +45,7 @@ enum MotorStatus
 class MotorControll
 {
 private:
-  int const MOTOR_STEPS = 2048*2; // При HALF mode n*2
+  int MOTOR_STEPS = 2048*2; // При HALF mode n*2
   float const ANGLE_PER_STEP = 360.0 / MOTOR_STEPS;
   int const MOTOR_PIN1 = 5; // для мотора 28BYJ-48 первый и последний пин меняются местами
   int const MOTOR_PIN2 = 6;
@@ -231,11 +232,15 @@ public:
           restartArduino();
           break;
         }
+        case Commands::SET_STEP_PER_ROUND:
+        {
+          MOTOR_STEPS = (int)command[Control::ARG1];
+          stepper.stepsRev = MOTOR_STEPS;
+          break;
+        }
         default:
         {
-          //Serial.println("Unidentified command");
-          Serial.println("Unidentified command. Check command list:\nDisable - 0\nEnable - 1\Turn by angle - 2\nStop - 3\nBrake - 4\nRotate - 5\nMaxSpeed - 6\nAcceleration -7\nStatus - 8\nTo zero point - 9\nRestart - 10");
-          // Увы данная строка вешает ардуино Uno, вывод всех строк начинает бится из за нехватки памяти...
+          Serial.println("Unidentified command. Check command list:\nDisable - 0\nEnable - 1\Turn by angle - 2\nStop - 3\nBrake - 4\nRotate - 5\nMaxSpeed - 6\nAcceleration -7\nStatus - 8\nTo zero point - 9\nRestart - 10\nStep per round - 11");
           break;
         } 
       }

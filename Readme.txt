@@ -16,6 +16,7 @@ Acceleration - 7, One arg command. if set 0 acc == max
 Status - 8, None arg command.
 To zero point - 9, None arg command.
 Restart - 10, None arg command.
+Set steps per round - 11, One arg command.
 
 Status list:
 IDLE- 0.
@@ -34,4 +35,6 @@ example:
 Status, Brake, Stop  executed out of order, others in queue.
 
 After the move command, the number of motor steps is written to the port.
+
+Set steps per round - works with a modified library GyverStepper2.h. https://github.com/GyverLibs/GyverStepper
 
