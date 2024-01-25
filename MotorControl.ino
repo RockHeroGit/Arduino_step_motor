@@ -9,11 +9,14 @@ void restartArduino()
   while (1) {}
 }
 
+
+
 enum Commands
 {
   DISABLE,
   ENABLE,
   TURN_BY_ANGLE,
+  TURN_BY_STEP,
   STOP,
   BRAKE,
   ROTATE,
@@ -22,7 +25,8 @@ enum Commands
   STATUS,
   TOZEROPOINT,
   RESTART,
-  SET_STEP_PER_ROUND
+  SET_STEP_PER_ROUND,
+  MICRO_STEP
 };
 
 enum Control
@@ -45,14 +49,18 @@ enum MotorStatus
 class MotorControll
 {
 private:
-  int MOTOR_STEPS = 2048*2; // При HALF mode n*2
+  int MOTOR_STEPS = 20400; // При HALF mode n*2
   float const ANGLE_PER_STEP = 360.0 / MOTOR_STEPS;
-  int const MOTOR_PIN1 = 5; // для мотора 28BYJ-48 первый и последний пин меняются местами
-  int const MOTOR_PIN2 = 6;
+  int const MOTOR_PIN1 = 8; // для мотора 28BYJ-48 первый и последний пин меняются местами
+  int const MOTOR_PIN2 = 5;
   int const MOTOR_PIN3 = 9;
   int const MOTOR_PIN4 = 10;
   const int NPOS = -1;
-
+#define MS1 7
+#define MS2 6
+#define enaPin 8
+#define dirPin 4
+#define stepPin 5
   DataArray data;
   QueueArray queue;
 
@@ -61,16 +69,35 @@ private:
   String string_parse;
 
 public:
-  GStepper2<STEPPER4WIRE_HALF> stepper;
-  //GStepper2<STEPPER2WIRE_HALF> stepper;
+  //GStepper2<STEPPER4WIRE> stepper;
+  GStepper2<STEPPER2WIRE> stepper;
 
-  MotorControll() : stepper(MOTOR_STEPS, MOTOR_PIN4, MOTOR_PIN2, MOTOR_PIN3, MOTOR_PIN1), separator(" ")
+  MotorControll() : stepper(MOTOR_STEPS, 5, 4), separator(" ")
   {
+    pinMode(MS1, OUTPUT);
+    pinMode(MS2, OUTPUT);
+    digitalWrite(MS1, 1);
+    digitalWrite(MS2, 0);
+
+  
+    pinMode(enaPin, OUTPUT);
     stepper.enable();
-    stepper.setAcceleration(0); // Максимальная ускорение
-    stepper.setMaxSpeed(800); // При HALF mod n*2
+    stepper.setAcceleration(500); // Максимальная ускорение
+    stepper.setMaxSpeed(5000); // При HALF mod n*2
+ 
     //stepper.setTarget(0);
     //stepper.autoPower(true); // раскоментить для автовыключения по достижению позиции (нарушает работу callback)
+  }
+
+  void micro(int x)
+  {
+    switch(x)
+    {
+      case 2: digitalWrite(MS1, 1);digitalWrite(MS2, 0);break;
+      case 4: digitalWrite(MS1, 0);digitalWrite(MS2, 1);break;
+      case 8: digitalWrite(MS1, 0);digitalWrite(MS2, 0);break;
+      case 16: digitalWrite(MS1, 1);digitalWrite(MS2, 1);break;   
+    }
   }
 
   void parse() 
@@ -207,6 +234,11 @@ public:
           axisMove(command[Control::ARG1]);
           break;
         }
+        case Commands::TURN_BY_STEP: // установить скорость в шагах/сек (float) и запустить вращение
+        {
+          stepper.setTarget(command[Control::ARG1], RELATIVE);
+          break;
+        }
         case Commands::ROTATE: // установить скорость в шагах/сек (float) и запустить вращение
         {
           setSpeed(command[Control::ARG1]);
@@ -229,6 +261,8 @@ public:
         }
         case Commands::RESTART:
         {
+          void(* resetFunc) (void) = 0;
+          resetFunc();
           restartArduino();
           break;
         }
@@ -236,6 +270,11 @@ public:
         {
           MOTOR_STEPS = (int)command[Control::ARG1];
           stepper.stepsRev = MOTOR_STEPS;
+          break;
+        }
+        case Commands::MICRO_STEP:
+        {
+          micro( (int)command[Control::ARG1]);
           break;
         }
         default:
